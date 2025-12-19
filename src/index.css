@@ -12,23 +12,42 @@
   from {
     transform: rotate(0deg);
   }
+
   to {
     transform: rotate(360deg);
   }
 }
 
-/* Custom Scrollbar for Webkit */
+/* Custom Scrollbar for Dark Theme */
 ::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
+  width: 6px;
+  height: 6px;
 }
+
 ::-webkit-scrollbar-track {
-  background: #f1f5f9; 
+  background: transparent;
 }
+
 ::-webkit-scrollbar-thumb {
-  background: #cbd5e1; 
-  border-radius: 4px;
+  background: #334155;
+  border-radius: 10px;
 }
+
 ::-webkit-scrollbar-thumb:hover {
-  background: #94a3b8; 
+  background: #475569;
+}
+
+/* Base resets & improvements */
+body {
+  @apply selection:bg-blue-500/30 selection:text-blue-200;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Premium Animations */
+.glass-effect {
+  @apply bg-slate-900/80 backdrop-blur-md border border-slate-700/50;
+}
+
+.transition-premium {
+  @apply transition-all duration-300 cubic-bezier(0.4, 0, 0.2, 1);
 }

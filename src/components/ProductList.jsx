@@ -237,9 +237,9 @@ const ProductList = () => {
                     c.product.size === item.size
                 );
                 if (existingIndex > -1) {
-                    newCart[existingIndex].qty += 4; // Add 4 more if already exists
+                    newCart[existingIndex].qty += 1; // Add 1 more if already exists
                 } else {
-                    newCart.push({ product: item, qty: 4 });
+                    newCart.push({ product: item, qty: 1 });
                 }
             });
             return newCart;
@@ -346,253 +346,284 @@ const ProductList = () => {
 
     return (
         <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-800 overflow-hidden">
-            {/* Toolbar */}
-            <div className="p-4 border-b border-slate-800 bg-slate-900">
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative flex-1 min-w-[200px] md:flex-none md:w-52">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
-                        <input
-                            type="text"
-                            placeholder="사이즈 검색"
-                            className="w-full pl-10 pr-4 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600"
-                            value={filter.size}
-                            onChange={(e) => setFilter({ ...filter, size: e.target.value })}
-                            onKeyDown={(e) => e.key === 'Enter' && filter.size.trim() && loadData()}
-                        />
+            {/* Premium Toolbar */}
+            <div className="p-5 border-b border-white/5 bg-slate-900/50">
+                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    {/* Search & Brand Group */}
+                    <div className="flex flex-col sm:flex-row flex-1 gap-3">
+                        <div className="relative flex-1">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
+                            <input
+                                type="text"
+                                placeholder="규격 입력 (예: 2454518)"
+                                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-slate-600"
+                                value={filter.size}
+                                onChange={(e) => setFilter({ ...filter, size: e.target.value })}
+                                onKeyDown={(e) => e.key === 'Enter' && filter.size.trim() && loadData()}
+                            />
+                        </div>
+
+                        <select
+                            className="w-full sm:w-48 pl-4 pr-10 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                            value={filter.brand}
+                            onChange={(e) => setFilter({ ...filter, brand: e.target.value })}
+                            style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundPosition: 'right 12px center', backgroundSize: '16px', backgroundRepeat: 'no-repeat' }}
+                        >
+                            {brandOptions.map(b => (
+                                <option key={b} value={b} className="bg-slate-900">
+                                    {b === 'Hankook' ? '한국+라우펜' : getBrandDisplayName(b)}
+                                </option>
+                            ))}
+                        </select>
                     </div>
 
-                    <select
-                        className="flex-1 md:flex-none pl-3 pr-8 py-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800 text-slate-100 min-w-[120px]"
-                        value={filter.brand}
-                        onChange={(e) => setFilter({ ...filter, brand: e.target.value })}
-                    >
-                        {brandOptions.map(b => (
-                            <option key={b} value={b}>
-                                {b === 'Hankook' ? '한국+라우펜' : getBrandDisplayName(b)}
-                            </option>
-                        ))}
-                    </select>
-
-                    <button
-                        onClick={loadData}
-                        disabled={!filter.size.trim()}
-                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95"
-                    >
-                        <Search size={16} />
-                        <span>검색</span>
-                    </button>
-
-                    <div className="flex gap-2 w-full md:w-auto">
-                        {selectedItems.length > 0 && (
-                            <button
-                                onClick={addToCart}
-                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-left-2 duration-300"
-                            >
-                                <ShoppingBag size={16} />
-                                <span className="whitespace-nowrap text-sm">담기 ({selectedItems.length})</span>
-                            </button>
-                        )}
-
-                        {cartItems.length > 0 && (
-                            <button
-                                onClick={() => setShowShareModal(true)}
-                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-all shadow-lg animate-in fade-in zoom-in duration-300"
-                            >
-                                <ShoppingCart size={16} />
-                                <span className="whitespace-nowrap text-sm">장바구니 ({cartItems.length})</span>
-                            </button>
-                        )}
-                    </div>
-                </div>
-
-                <div className="mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
+                    {/* Action Group */}
+                    <div className="flex flex-row gap-2">
                         <button
                             onClick={loadData}
-                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-full transition-colors"
-                            title="새로고침"
+                            disabled={!filter.size.trim() || loading}
+                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black rounded-xl transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
                         >
-                            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                            {loading ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
+                            <span className="whitespace-nowrap">검색하기</span>
                         </button>
-                        <div className="text-sm text-slate-400">
-                            총 <span className="font-bold text-slate-100">{filteredProducts.length}</span>개 상품
+
+                        <div className="flex gap-2">
+                            {selectedItems.length > 0 && (
+                                <button
+                                    onClick={addToCart}
+                                    className="p-3 bg-amber-500 hover:bg-amber-400 text-slate-900 font-bold rounded-xl transition-all shadow-lg active:scale-95 animate-in slide-in-from-right-4"
+                                    title="장바구니 담기"
+                                >
+                                    <ShoppingBag size={20} />
+                                </button>
+                            )}
+
+                            {cartItems.length > 0 && (
+                                <button
+                                    onClick={() => setShowShareModal(true)}
+                                    className="p-3 bg-green-500 hover:bg-green-400 text-slate-900 font-bold rounded-xl transition-all shadow-lg active:scale-95 animate-in zoom-in"
+                                    title="장바구니 보기"
+                                >
+                                    <ShoppingCart size={20} />
+                                </button>
+                            )}
                         </div>
                     </div>
+                </div>
 
-                    <div className="text-[10px] text-slate-500 italic hidden sm:block">
-                        * 공장도 가격이 있는 상품만 표시됩니다.
+                <div className="mt-4 flex items-center justify-between text-[11px] font-bold tracking-wider">
+                    <div className="flex items-center gap-3 text-slate-500 uppercase">
+                        <span>Result Count</span>
+                        <span className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">{filteredProducts.length}</span>
+                    </div>
+                    <div className="text-slate-600 italic lg:block hidden">
+                        * 공장도 가격이 등록된 상품만 리스팅됩니다.
                     </div>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
-                <table className="w-full text-left text-sm">
-                    <thead className="bg-slate-800/50 text-slate-400 font-medium border-b border-slate-800">
-                        <tr>
-                            <th className="px-4 py-4 w-10 text-center">
-                                <button onClick={toggleSelectAll} className="p-1 hover:bg-slate-700 rounded transition-colors text-slate-400">
-                                    {selectedItems.length === filteredProducts.length && filteredProducts.length > 0
-                                        ? <CheckSquare size={18} className="text-blue-500" />
-                                        : <Square size={18} />
-                                    }
-                                </button>
-                            </th>
-                            <th
-                                className="px-4 py-4 cursor-pointer hover:bg-slate-800 transition-colors"
-                                onClick={() => handleSort('brand')}
-                            >
-                                <div className="flex items-center gap-1">
-                                    브랜드
-                                    <SortIcon columnKey="brand" />
-                                </div>
-                            </th>
-                            <th
-                                className="px-4 py-4 cursor-pointer hover:bg-slate-800 transition-colors"
-                                onClick={() => handleSort('model')}
-                            >
-                                <div className="flex items-center gap-1">
-                                    상품명
-                                    <SortIcon columnKey="model" />
-                                </div>
-                            </th>
-                            <th className="px-4 py-4">사이즈</th>
-
-                            {/* New Pricing Columns */}
-                            <th
-                                className="px-4 py-4 text-right cursor-pointer hover:bg-slate-800 transition-colors"
-                                onClick={() => handleSort('factoryPrice')}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    공장도(원)
-                                    <SortIcon columnKey="factoryPrice" />
-                                </div>
-                            </th>
-                            <th className="px-4 py-4 text-center">할인율(%)</th>
-                            <th className="px-4 py-4 text-right font-bold text-slate-300">할인금액(원)</th>
-
-                            <th
-                                className="px-4 py-4 text-right cursor-pointer hover:bg-slate-800 transition-colors"
-                                onClick={() => handleSort('totalStock')}
-                            >
-                                <div className="flex items-center justify-end gap-1">
-                                    재고
-                                    <SortIcon columnKey="totalStock" />
-                                </div>
-                            </th>
-                            <th className="px-4 py-4 text-center">DOT</th>
-                            <th className="px-4 py-4 text-center text-xs text-gray-400">Part No.</th>
-                        </tr>
-                    </thead>
-                    <tbody className="divide-y divide-slate-800">
-                        {loading ? (
+            {/* Data Display */}
+            <div className="relative">
+                {/* Desktop Table */}
+                <div className="hidden lg:block overflow-x-auto">
+                    <table className="w-full text-left text-sm">
+                        <thead className="bg-slate-800/30 text-slate-500 font-bold uppercase tracking-wider border-b border-white/5">
                             <tr>
-                                <td colSpan="10" className="px-6 py-12 text-center text-gray-400">
-                                    <div className="flex flex-col items-center justify-center">
-                                        <div className="w-8 h-8 border-4 border-blue-500 border-t-transparent rounded-full animate-spin mb-3"></div>
-                                        데이터를 불러오는 중입니다...
-                                    </div>
-                                </td>
+                                <th className="px-5 py-4 w-12 text-center">
+                                    <button onClick={toggleSelectAll} className="hover:text-blue-400 transition-colors">
+                                        {selectedItems.length === filteredProducts.length && filteredProducts.length > 0
+                                            ? <CheckSquare size={20} className="text-blue-500" />
+                                            : <Square size={20} />
+                                        }
+                                    </button>
+                                </th>
+                                <th className="px-5 py-4 cursor-pointer group" onClick={() => handleSort('brand')}>
+                                    <div className="flex items-center gap-2">브랜드 <SortIcon columnKey="brand" /></div>
+                                </th>
+                                <th className="px-5 py-4 cursor-pointer group" onClick={() => handleSort('model')}>
+                                    <div className="flex items-center gap-2">상품명 <SortIcon columnKey="model" /></div>
+                                </th>
+                                <th className="px-5 py-4">규격</th>
+                                <th className="px-5 py-4 text-right cursor-pointer group" onClick={() => handleSort('factoryPrice')}>
+                                    <div className="flex items-center justify-end gap-2">공장도 <SortIcon columnKey="factoryPrice" /></div>
+                                </th>
+                                <th className="px-5 py-4 text-center">DC(%)</th>
+                                <th className="px-5 py-4 text-right font-black text-slate-400">판매가</th>
+                                <th className="px-5 py-4 text-right cursor-pointer group" onClick={() => handleSort('totalStock')}>
+                                    <div className="flex items-center justify-end gap-2">재고 <SortIcon columnKey="totalStock" /></div>
+                                </th>
+                                <th className="px-5 py-4 text-center">DOT</th>
                             </tr>
-                        ) : filteredProducts.length === 0 ? (
-                            <tr>
-                                <td colSpan="10" className="px-6 py-12 text-center text-gray-400">
-                                    <AlertCircle size={32} className="mx-auto mb-2 opacity-50" />
-                                    {filter.size.trim().length === 0 ? "사이즈를 입력하여 검색을 시작하세요." : "검색된 상품이 없습니다."}
-                                </td>
-                            </tr>
-                        ) : (
-                            filteredProducts.map((product, idx) => {
-                                // Calculate Discounted Price
-                                const factoryPrice = product.factoryPrice ?? 0;
-                                const discountRate = (product.discountRate === undefined || product.discountRate === null) ? 0 : product.discountRate;
-                                const discountedPrice = Math.floor((Number(factoryPrice) || 0) * (1 - (Number(discountRate) || 0) / 100));
+                        </thead>
+                        <tbody className="divide-y divide-white/5">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan="9" className="py-24 text-center">
+                                        <div className="flex flex-col items-center gap-3">
+                                            <div className="w-10 h-10 border-4 border-blue-600/30 border-t-blue-600 rounded-full animate-spin"></div>
+                                            <span className="text-slate-500 font-bold">Synchronizing Data...</span>
+                                        </div>
+                                    </td>
+                                </tr>
+                            ) : filteredProducts.length === 0 ? (
+                                <tr>
+                                    <td colSpan="9" className="py-24 text-center text-slate-500">
+                                        <Search size={48} className="mx-auto mb-4 opacity-10" />
+                                        <div className="font-black text-xl mb-1">NO DATA FOUND</div>
+                                        <p className="text-sm opacity-50 font-medium">Please refine your search query.</p>
+                                    </td>
+                                </tr>
+                            ) : (
+                                filteredProducts.map((p, idx) => {
+                                    const factoryPrice = p.factoryPrice ?? 0;
+                                    const discountRate = p.discountRate || 0;
+                                    const discountedPrice = Math.floor(factoryPrice * (1 - discountRate / 100));
+                                    const selected = isSelected(p);
 
-                                return (
-                                    <tr key={idx} className={`hover:bg-blue-900/20 transition-colors group ${isSelected(product) ? 'bg-blue-900/10' : ''}`}>
-                                        <td className="px-4 py-4 text-center">
-                                            <button
-                                                onClick={() => toggleSelectItem(product)}
-                                                className={`p-1 rounded transition-colors ${isSelected(product) ? 'text-blue-500' : 'text-slate-600 hover:text-slate-400'}`}
-                                            >
-                                                {isSelected(product) ? <CheckSquare size={18} /> : <Square size={18} />}
-                                            </button>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className="font-bold text-slate-200">
-                                                {getBrandDisplayName(product.brand)}
-                                            </span>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <div className="font-medium text-slate-300">{product.model}</div>
-                                        </td>
-                                        <td className="px-4 py-4">
-                                            <span className="bg-slate-800 text-slate-400 px-2 py-1 rounded font-mono text-xs border border-slate-700">
-                                                {product.size}
-                                            </span>
-                                        </td>
-
-                                        {/* Pricing Inputs */}
-                                        <td className="px-4 py-4 text-right">
-                                            <input
-                                                type="text"
-                                                className="w-24 text-right border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-800 text-slate-200 hover:bg-slate-700"
-                                                value={factoryPrice ? factoryPrice.toLocaleString() : ''}
-                                                onChange={(e) => handlePriceUpdate(product, 'factoryPrice', e.target.value)}
-                                            />
-                                        </td>
-                                        <td className="px-4 py-4 text-center">
-                                            <div className="flex items-center justify-center">
+                                    return (
+                                        <tr key={idx} className={`group transition-premium hover:bg-blue-600/5 ${selected ? 'bg-blue-600/10' : ''}`}>
+                                            <td className="px-5 py-4 text-center">
+                                                <button onClick={() => toggleSelectItem(p)} className={`transition-colors ${selected ? 'text-blue-500' : 'text-slate-700 group-hover:text-slate-500'}`}>
+                                                    {selected ? <CheckSquare size={20} /> : <Square size={20} />}
+                                                </button>
+                                            </td>
+                                            <td className="px-5 py-4 font-black text-slate-200">{getBrandDisplayName(p.brand)}</td>
+                                            <td className="px-5 py-4 font-bold text-slate-400">{p.model}</td>
+                                            <td className="px-5 py-4">
+                                                <span className="bg-slate-800/50 px-2 py-1 rounded font-mono text-[11px] border border-white/5 text-slate-400">{p.size}</span>
+                                            </td>
+                                            <td className="px-5 py-4 text-right">
                                                 <input
                                                     type="text"
-                                                    className="w-16 text-center border border-slate-700 rounded px-2 py-1 text-sm focus:outline-none focus:ring-1 focus:ring-blue-500 bg-slate-800 text-slate-200 hover:bg-slate-700"
-                                                    value={discountRate}
-                                                    onChange={(e) => {
-                                                        const val = e.target.value.replace(/[^0-9]/g, '');
-                                                        handlePriceUpdate(product, 'discountRate', val === '' ? '' : Number(val));
-                                                    }}
-                                                    onFocus={() => { if (Number(discountRate) === 0) handlePriceUpdate(product, 'discountRate', ''); }}
-                                                    onBlur={() => { if (discountRate === '') handlePriceUpdate(product, 'discountRate', 0); }}
+                                                    className="w-24 text-right bg-slate-800/30 border border-white/5 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                                    value={factoryPrice ? factoryPrice.toLocaleString() : ''}
+                                                    onChange={(e) => handlePriceUpdate(p, 'factoryPrice', e.target.value)}
                                                 />
-                                            </div>
-                                        </td>
-                                        <td className="px-4 py-4 text-right font-bold text-blue-400">
-                                            {discountedPrice.toLocaleString()}
-                                        </td>
-
-                                        <td className="px-4 py-4 text-right">
-                                            {product.totalStock > 0 ? (
-                                                <span className="font-bold text-slate-400 tabular-nums">
-                                                    {product.totalStock.toLocaleString()}
-                                                </span>
-                                            ) : (
-                                                <span className="text-red-500 text-xs font-bold uppercase tracking-tighter">SOLDOUT</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-4 text-center">
-                                            {/* DOT List Display */}
-                                            {product.dotList && product.dotList.length > 0 ? (
-                                                <div className="text-[10px] text-left text-slate-500">
-                                                    {product.dotList.map((dot, i) => (
-                                                        <div key={i} className="whitespace-nowrap py-0.5 border-b border-slate-800/50 last:border-0">{dot}</div>
-                                                    ))}
+                                            </td>
+                                            <td className="px-5 py-4 text-center">
+                                                <input
+                                                    type="text"
+                                                    className="w-12 text-center bg-blue-500/5 border border-blue-500/10 rounded px-1 py-1 text-xs font-black text-blue-400 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                                    value={discountRate}
+                                                    onChange={(e) => handlePriceUpdate(p, 'discountRate', e.target.value.replace(/[^0-9]/g, ''))}
+                                                />
+                                            </td>
+                                            <td className="px-5 py-4 text-right font-black text-blue-400 tabular-nums">{discountedPrice.toLocaleString()}</td>
+                                            <td className="px-5 py-4 text-right font-black tabular-nums">
+                                                {p.totalStock > 0 ? <span className="text-slate-400">{p.totalStock.toLocaleString()}</span> : <span className="text-red-500/50">OUT</span>}
+                                            </td>
+                                            <td className="px-5 py-4 text-center">
+                                                <div className="flex flex-col gap-0.5 max-h-12 overflow-y-auto no-scrollbar">
+                                                    {p.dotList?.map((dot, i) => <div key={i} className="text-[10px] text-slate-600 whitespace-nowrap">{dot}</div>)}
                                                 </div>
-                                            ) : (
-                                                <span className="text-xs text-slate-700">-</span>
-                                            )}
-                                        </td>
-                                        <td className="px-4 py-4 text-center">
-                                            <span className="text-slate-500 font-mono text-xs border border-slate-800 px-1 rounded">
-                                                {product.partNo || '-'}
-                                            </span>
-                                        </td>
-                                    </tr>
-                                );
-                            })
-                        )}
-                    </tbody>
-                </table>
+                                            </td>
+                                        </tr>
+                                    );
+                                })
+                            )}
+                        </tbody>
+                    </table>
+                </div>
+
+                {/* Mobile Card View */}
+                <div className="lg:hidden p-4 space-y-4">
+                    {loading ? (
+                        <div className="py-20 text-center space-y-4">
+                            <div className="w-12 h-12 border-4 border-blue-600/20 border-t-blue-600 rounded-full animate-spin mx-auto"></div>
+                            <span className="text-lg font-black text-slate-500 italic">LOADING...</span>
+                        </div>
+                    ) : filteredProducts.length === 0 ? (
+                        <div className="py-20 text-center opacity-30">
+                            <Search size={64} className="mx-auto mb-4" />
+                            <div className="text-2xl font-black italic">NO RESULTS</div>
+                        </div>
+                    ) : (
+                        filteredProducts.map((p, idx) => {
+                            const factoryPrice = p.factoryPrice ?? 0;
+                            const discountRate = p.discountRate || 0;
+                            const discountedPrice = Math.floor(factoryPrice * (1 - discountRate / 100));
+                            const selected = isSelected(p);
+
+                            return (
+                                <div key={idx} className={`relative p-5 rounded-2xl border transition-premium overflow-hidden ${selected ? 'bg-blue-600/20 border-blue-500/50 shadow-lg shadow-blue-900/40' : 'bg-slate-900/50 border-white/5'}`}>
+                                    {/* Selection Glow */}
+                                    {selected && <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-[60px] pointer-events-none"></div>}
+
+                                    <div className="flex justify-between items-start mb-4 relative z-10">
+                                        <div onClick={() => toggleSelectItem(p)} className="cursor-pointer">
+                                            <div className="flex items-center gap-3 mb-1">
+                                                <span className="px-2 py-0.5 bg-blue-600 text-[10px] font-black rounded uppercase tracking-tighter shadow-lg shadow-blue-900/40">{getBrandDisplayName(p.brand)}</span>
+                                                <span className={`transition-colors ${selected ? 'text-blue-400' : 'text-slate-600'}`}>
+                                                    {selected ? <CheckSquare size={22} /> : <Square size={22} />}
+                                                </span>
+                                            </div>
+                                            <h3 className="text-lg font-black text-white leading-tight">{p.model}</h3>
+                                            <p className="text-xs font-mono text-slate-500 mt-1">{p.size}</p>
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Stock</div>
+                                            <div className={`text-xl font-black italic ${p.totalStock > 0 ? 'text-slate-300' : 'text-red-500/50'}`}>
+                                                {p.totalStock > 0 ? p.totalStock.toLocaleString() : 'OUT'}
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
+                                        <div>
+                                            <label className="text-[10px] text-slate-600 font-black uppercase mb-1 block">Factory Price</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-slate-800/50 border border-white/5 rounded-lg px-3 py-2 text-sm font-bold text-slate-300 focus:ring-1 focus:ring-blue-500/50 outline-none"
+                                                value={factoryPrice ? factoryPrice.toLocaleString() : ''}
+                                                onChange={(e) => handlePriceUpdate(p, 'factoryPrice', e.target.value)}
+                                            />
+                                        </div>
+                                        <div>
+                                            <label className="text-[10px] text-slate-600 font-black uppercase mb-1 block">Discount %</label>
+                                            <input
+                                                type="text"
+                                                className="w-full bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-sm font-black text-blue-400 focus:ring-1 focus:ring-blue-500/50 outline-none"
+                                                value={discountRate}
+                                                onChange={(e) => handlePriceUpdate(p, 'discountRate', e.target.value.replace(/[^0-9]/g, ''))}
+                                            />
+                                        </div>
+                                    </div>
+
+                                    <div className="mt-4 flex items-end justify-between relative z-10">
+                                        <div className="flex flex-wrap gap-1 max-w-[60%]">
+                                            {p.dotList?.slice(0, 3).map((dot, i) => (
+                                                <span key={i} className="text-[9px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-white/5">{dot}</span>
+                                            ))}
+                                            {p.dotList?.length > 3 && <span className="text-[9px] text-slate-600">+{p.dotList.length - 3} more</span>}
+                                        </div>
+                                        <div className="text-right">
+                                            <div className="text-[10px] text-blue-500 font-black uppercase tracking-widest leading-none mb-1">Sales Price</div>
+                                            <div className="text-2xl font-black text-blue-400 drop-shadow-[0_0_10px_rgba(37,99,235,0.4)]">
+                                                {discountedPrice.toLocaleString()}<span className="text-sm ml-0.5">₩</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            );
+                        })
+                    )}
+                </div>
             </div>
+
+            {/* Sticky Mobile Add to Cart Button */}
+            {selectedItems.length > 0 && (
+                <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-40 animate-in slide-in-from-bottom-8">
+                    <button
+                        onClick={addToCart}
+                        className="w-full py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-900 font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-transform overflow-hidden group"
+                    >
+                        <ShoppingBag size={24} className="group-hover:animate-bounce" />
+                        <span className="text-lg">장바구니에 {selectedItems.length}개 추가</span>
+                        <div className="absolute inset-0 bg-white/20 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 rotate-12"></div>
+                    </button>
+                </div>
+            )}
 
             {!loading && filteredProducts.length > 0 && (
                 <div className="p-4 border-t border-slate-800 bg-slate-900 text-center">
@@ -602,29 +633,31 @@ const ProductList = () => {
                 </div>
             )}
 
-            {/* Share Modal */}
+            {/* Premium Share Modal */}
             {showShareModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-2xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in zoom-in-95 duration-300">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-slate-900 border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
                         {/* Header */}
-                        <div className="p-6 border-b border-slate-800 flex items-center justify-between bg-slate-800/50">
+                        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-800/30">
                             <div>
-                                <h3 className="text-xl font-bold text-white flex items-center gap-2">
+                                <h3 className="text-xl font-black text-white flex items-center gap-2">
                                     <Share2 className="text-blue-500" />
-                                    장바구니 견적 공유
+                                    견적서 생성
                                 </h3>
-                                <p className="text-slate-400 text-sm mt-1">장바구니에 {cartItems.length}개의 품목이 담겨 있습니다.</p>
+                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">
+                                    {cartItems.length} ITEMS IN BASKET
+                                </p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={clearCart}
-                                    className="px-3 py-1 text-xs text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-red-400/20"
+                                    className="px-3 py-1.5 text-[10px] font-black text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-red-400/30 uppercase tracking-tighter"
                                 >
-                                    장바구니 비우기
+                                    Empty
                                 </button>
                                 <button
                                     onClick={() => setShowShareModal(false)}
-                                    className="p-2 hover:bg-slate-700 rounded-full text-slate-400 hover:text-white transition-colors"
+                                    className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-premium"
                                 >
                                     <X size={24} />
                                 </button>
@@ -632,53 +665,55 @@ const ProductList = () => {
                         </div>
 
                         {/* Content */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4">
+                        <div className="flex-1 overflow-y-auto p-5 space-y-4 no-scrollbar">
                             {cartItems.map((item, i) => {
                                 const p = item.product;
                                 const discountedPrice = Math.floor((p.factoryPrice || 0) * (1 - (p.discountRate || 0) / 100));
                                 const subtotal = discountedPrice * item.qty;
                                 return (
-                                    <div key={i} className="bg-slate-800/50 border border-slate-700 rounded-xl p-4 flex flex-col md:flex-row justify-between gap-4 group relative">
+                                    <div key={i} className="bg-slate-800/30 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 group relative">
                                         <button
                                             onClick={() => removeFromCart(item)}
-                                            className="absolute -top-2 -right-2 w-6 h-6 bg-slate-700 text-slate-400 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 hover:bg-red-600 hover:text-white transition-all shadow-lg z-10"
-                                            title="삭제"
+                                            className="absolute top-2 right-2 w-8 h-8 bg-slate-800 text-slate-500 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-premium shadow-lg z-10"
                                         >
-                                            <X size={14} />
+                                            <X size={16} />
                                         </button>
-                                        <div className="space-y-1">
-                                            <div className="flex items-center gap-2">
-                                                <span className="bg-blue-600/20 text-blue-400 text-[10px] font-bold px-2 py-0.5 rounded uppercase">
-                                                    {getBrandDisplayName(p.brand)}
-                                                </span>
-                                                <span className="text-white font-bold">{p.model}</span>
+
+                                        <div className="flex justify-between items-start pr-8">
+                                            <div className="space-y-1">
+                                                <div className="flex items-center gap-2">
+                                                    <span className="bg-blue-600/20 text-blue-400 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                                        {getBrandDisplayName(p.brand)}
+                                                    </span>
+                                                    <span className="text-white font-black text-sm">{p.model}</span>
+                                                </div>
+                                                <div className="text-slate-500 text-[11px] font-bold font-mono uppercase">{p.size}</div>
                                             </div>
-                                            <div className="text-slate-400 text-sm font-mono">{p.size}</div>
+                                            <div className="text-right">
+                                                <div className="text-[9px] text-slate-600 font-black uppercase mb-1">Total</div>
+                                                <div className="text-blue-400 font-black text-lg">{subtotal.toLocaleString()}원</div>
+                                            </div>
                                         </div>
 
-                                        <div className="flex items-center gap-6">
-                                            {/* Qty Controller */}
-                                            <div className="flex items-center bg-slate-900 rounded-lg p-1 border border-slate-700">
+                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
+                                            <div className="flex items-center bg-slate-900/50 rounded-xl p-1 border border-white/5 shadow-inner">
                                                 <button
                                                     onClick={() => updateCartQty(item, -1)}
-                                                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-xl"
                                                 >
                                                     -
                                                 </button>
-                                                <span className="w-10 text-center font-bold text-blue-400">{item.qty}</span>
+                                                <span className="w-10 text-center font-black text-blue-500 text-lg tabular-nums">{item.qty}</span>
                                                 <button
                                                     onClick={() => updateCartQty(item, 1)}
-                                                    className="w-8 h-8 flex items-center justify-center text-slate-400 hover:text-white hover:bg-slate-800 rounded transition-colors"
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-xl"
                                                 >
                                                     +
                                                 </button>
                                             </div>
 
-                                            <div className="flex flex-col items-end min-w-[120px]">
-                                                <div className="text-slate-500 text-[10px] mb-1">
-                                                    단가: {discountedPrice.toLocaleString()}원
-                                                </div>
-                                                <div className="text-blue-400 text-lg font-black">{subtotal.toLocaleString()}원</div>
+                                            <div className="text-right text-[10px] text-slate-500 font-bold italic">
+                                                Unit Price: {discountedPrice.toLocaleString()}원
                                             </div>
                                         </div>
                                     </div>
@@ -687,61 +722,53 @@ const ProductList = () => {
                         </div>
 
                         {/* Total Sum Footer */}
-                        <div className="px-6 py-4 bg-slate-800/30 border-t border-slate-800 flex justify-between items-center">
-                            <span className="text-slate-400 font-bold">총 합계금액</span>
-                            <span className="text-2xl font-black text-white">
-                                {cartItems.reduce((acc, item) => {
-                                    const p = item.product;
-                                    const price = Math.floor((p.factoryPrice || 0) * (1 - (p.discountRate || 0) / 100));
-                                    return acc + (price * item.qty);
-                                }, 0).toLocaleString()}원
-                            </span>
+                        <div className="px-6 py-6 bg-slate-800/50 border-t border-white/5 flex justify-between items-end">
+                            <div>
+                                <span className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] block mb-1">Estimation Total</span>
+                                <span className="text-3xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                                    {cartItems.reduce((acc, item) => {
+                                        const p = item.product;
+                                        const price = Math.floor((p.factoryPrice || 0) * (1 - (p.discountRate || 0) / 100));
+                                        return acc + (price * item.qty);
+                                    }, 0).toLocaleString()}<span className="text-sm ml-1 opacity-50 font-medium italic uppercase">KRW</span>
+                                </span>
+                            </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="p-6 border-t border-slate-800 bg-slate-900/80 flex flex-col gap-3">
+                        {/* Action Bar */}
+                        <div className="p-6 bg-slate-900 space-y-4 pb-10 sm:pb-6">
                             <button
                                 onClick={copyToClipboard}
-                                className="w-full py-4 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-lg rounded-xl flex items-center justify-center gap-3 shadow-xl transform transition-transform active:scale-[0.98]"
+                                className="w-full py-5 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-blue-900/40 active:scale-[0.98] transition-all group overflow-hidden relative"
                             >
-                                <Copy size={20} />
-                                견적 공유하기
+                                <Copy size={22} className="group-hover:rotate-12 transition-transform" />
+                                견적 내용 복사
+                                <div className="absolute inset-0 bg-white/10 translate-x-[-100%] group-hover:translate-x-[100%] transition-transform duration-1000 rotate-12"></div>
                             </button>
 
-                            <div className="flex flex-col items-center gap-3 py-2 border-t border-slate-800 mt-2 pt-4">
-                                <div className="text-slate-400 text-xs">-----------------------------</div>
-                                <div className="flex flex-col items-center gap-2">
-                                    <button
-                                        onClick={copyAccount}
-                                        className="text-slate-300 font-bold hover:text-blue-400 transition-colors"
-                                    >
-                                        기업 15207812304017 (주)대동휠앤타이어
-                                    </button>
-                                    <a
-                                        href="https://toss.im/_m/transfer?bank=%EA%B8%B0%EC%97%85&account=15207812304017"
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="text-[10px] text-blue-500 font-medium bg-blue-500/10 px-3 py-1.5 rounded-full hover:bg-blue-500/20 transition-all border border-blue-500/20"
-                                    >
-                                        토스로 송금하기
-                                    </a>
-                                </div>
-
-                                <div className="flex items-center gap-6 mt-2">
-                                    <a
-                                        href="tel:1566-1342"
-                                        className="text-slate-400 text-sm hover:text-blue-400 transition-colors flex items-center gap-1"
-                                    >
-                                        전화문의: 1566-1342
-                                    </a>
-                                    <button
-                                        onClick={() => setShowShareModal(false)}
-                                        className="text-slate-500 text-sm hover:text-slate-300 transition-colors"
-                                    >
-                                        닫기
-                                    </button>
-                                </div>
+                            <div className="grid grid-cols-2 gap-3">
+                                <button
+                                    onClick={copyAccount}
+                                    className="py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all border border-white/5"
+                                >
+                                    계좌번호 복사
+                                </button>
+                                <a
+                                    href="https://toss.im/_m/transfer?bank=%EA%B8%B0%EC%97%85&account=15207812304017"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="py-3 bg-blue-500/10 hover:bg-blue-500/20 text-blue-400 font-bold text-xs rounded-xl transition-all border border-blue-500/20 text-center flex items-center justify-center"
+                                >
+                                    토스 송금
+                                </a>
                             </div>
+
+                            <button
+                                onClick={() => setShowShareModal(false)}
+                                className="w-full text-slate-600 text-xs font-bold uppercase tracking-[0.2em] hover:text-slate-400 transition-colors"
+                            >
+                                Dismiss Modal
+                            </button>
                         </div>
                     </div>
                 </div>
