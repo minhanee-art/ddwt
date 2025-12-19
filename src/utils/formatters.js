@@ -14,6 +14,7 @@ export const BRAND_KO_MAP = {
     'Yokohama': '요코하마',
     'Toyo': '토요타이어',
     'Falken': '팔켄',
+    'Laufenn': '라우펜',
     'All': '전체'
 };
 

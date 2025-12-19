@@ -148,14 +148,17 @@ class InventoryService {
              */
             const rawBrand = getText(cols[1]);
             const rawModel = getText(cols[2]);
-            const rawPartNo = getText(cols[3]); // Capturing the displayed Part No
+            const rawPartNo = getText(cols[3]); // Internal Part No
             const rawSize = getText(cols[4]);
 
-            // Unique Code is in an input field in col 5
-            let uniqueCode = getValue(cols[5]);
+            // USER REQUEST: Exclude discontinued products
+            // The status is typically in the last or second to last column
+            const lastColText = getText(cols[cols.length - 1]);
+            const secondLastColText = getText(cols[cols.length - 2]);
+            if (lastColText.includes('단종') || secondLastColText.includes('단종')) return null;
 
-            // USER REQUEST: Exclude items where Unique Code (고유코드) is 0 or empty
-            if (!uniqueCode || uniqueCode === '0' || uniqueCode === 0) return null;
+            // USER REQUEST: Show all products from the list, even if Unique Code is missing.
+            const uniqueCode = getValue(cols[5]);
 
             // Stock is text in col 9 
             const stockQty = Number(getText(cols[9]).replace(/[^0-9]/g, '')) || 0;
@@ -167,7 +170,8 @@ class InventoryService {
                 brand: rawBrand,
                 model: rawModel,
                 size: rawSize,
-                partNo: uniqueCode,
+                partNo: uniqueCode, // This is the Unique Code (Input value)
+                internalCode: rawPartNo, // This is the Internal Part No (Text)
                 supplyPrice: supplyPrice, // Isolated API price
                 factoryPrice: 0, // Strictly 0 until merged with sheet
                 totalStock: stockQty,
@@ -252,6 +256,60 @@ class InventoryService {
         }
 
         return true;
+    }
+
+    /**
+     * USER REQUEST: Fetch factory prices from shop/list.php (via AJAX)
+     * This helps fill in missing factory prices that are not in the Google Sheet.
+     */
+    async fetchFactoryPrices(sizeSearch) {
+        try {
+            const params = new URLSearchParams();
+            params.append('stx', sizeSearch);
+            params.append('ca_id', '10'); // Default tire category
+            params.append('srch_type', 'tire');
+
+            const response = await fetch('/api/shop_ajax', {
+                method: 'POST',
+                body: params,
+                headers: {
+                    'Content-Type': 'application/x-www-form-urlencoded'
+                }
+            });
+
+            if (!response.ok) return {};
+
+            const html = await response.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(html, 'text/html');
+            const items = doc.querySelectorAll('.product_list_wrap');
+
+            const priceMap = {}; // Key: "model|size", Value: Price
+
+            items.forEach(item => {
+                // The list_more.php returns HTML chunks with items
+                // Using .title for model and .english_title_box span for size
+                // .sub_price contains the factory price
+                const model = item.querySelector('.title')?.textContent?.trim();
+                const size = item.querySelector('.english_title_box span')?.textContent?.trim();
+                const priceText = item.querySelector('.sub_price')?.textContent?.trim();
+
+                if (model && size && priceText) {
+                    const cleanPrice = Number(priceText.replace(/[^0-9]/g, ''));
+                    // Normalize the key: remove non-alphanumeric, lowercase
+                    const normModel = model.toLowerCase().replace(/[^a-z0-9]/g, '');
+                    const normSize = size.replace(/[^0-9]/g, '');
+                    const key = `${normModel}|${normSize}`;
+                    priceMap[key] = cleanPrice;
+                    console.log(`[Scraper] Found Shop Price: ${model} ${size} -> ${cleanPrice} (Key: ${key})`);
+                }
+            });
+
+            return priceMap;
+        } catch (error) {
+            console.error("Failed to fetch shop prices:", error);
+            return {};
+        }
     }
 }
 

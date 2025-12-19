@@ -62,8 +62,6 @@ export const googleSheetService = {
                                 factoryPrice: Number(price),
                                 dotList: dotList
                             };
-                        }).filter(item => {
-                            return item.code && item.code !== '0';
                         });
 
                         // Update Cache
