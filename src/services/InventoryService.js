@@ -42,6 +42,7 @@ class InventoryService {
                 let url = '/api/inventory';
                 const params = new URLSearchParams();
                 if (sizeSearch) {
+                    params.append('sfl', 'all'); // search all fields (standard G5)
                     params.append('stx', sizeSearch);
                 }
 
@@ -49,9 +50,9 @@ class InventoryService {
                     url += `?${params.toString()}`;
                 }
 
-                console.log(`Fetching from ${url}...`);
+                console.log(`[Shop Fetch] URL: ${url}`);
                 const controller = new AbortController();
-                const timeoutId = setTimeout(() => controller.abort(), 8000); // 8 second timeout
+                const timeoutId = setTimeout(() => controller.abort(), 8000);
 
                 const response = await fetch(url, {
                     method: 'GET',
@@ -64,6 +65,8 @@ class InventoryService {
 
                 if (!response.ok) throw new Error('Network response was not ok');
                 const text = await response.text();
+
+                console.log(`[Shop Fetch] Received HTML (first 200 chars): ${text.substring(0, 200)}...`);
 
                 // Check if response is actually a login page (common issue with proxies)
                 // However, stock_list_option.php returns HTML table on success
@@ -110,77 +113,88 @@ class InventoryService {
     }
 
     parseShopData(responseBody) {
-        console.log("Parsing API Response (stock_list_option)...");
+        console.log("Parsing API Response (stock_list_option) with Dynamic Header Detection...");
 
         const parser = new DOMParser();
         const doc = parser.parseFromString(responseBody, 'text/html');
-        // Select rows (filtering out the header row if possible, but our index check handles it)
-        const rows = Array.from(doc.querySelectorAll('table.stock-list_table tbody tr'));
+        const rows = Array.from(doc.querySelectorAll('table.stock-list_table tr'));
 
         if (rows.length === 0) {
             console.warn("No rows found in HTML response");
             return [];
         }
 
-        const parsedItems = rows.map((row, rowIndex) => {
+        // Helper to get text or input value
+        const getValue = (col) => {
+            if (!col) return '';
+            const input = col.querySelector('input[type="text"]');
+            if (input) return input.value.trim();
+            return col.textContent.trim();
+        };
+
+        const getText = (col) => col ? col.textContent.trim() : '';
+
+        // Detect Offset: If first column is a checkbox or empty, shift everything by 1
+        const firstHeader = rows[0].querySelector('th, td');
+        const hasCheckbox = firstHeader && (firstHeader.querySelector('input[type="checkbox"]') || getText(firstHeader) === '');
+        const offset = hasCheckbox ? 1 : 0;
+
+        console.log(`[Parser] Offset detected: ${offset} (Checkbox: ${hasCheckbox})`);
+
+        // Exact indices based on User's 15-column map (1-based + offset)
+        const getIdx = (n) => (n - 1) + offset;
+
+        // Step 2: Parse Rows
+        const parsedItems = rows.slice(1).map((row) => {
             const cols = Array.from(row.querySelectorAll('td'));
             if (cols.length < 5) return null;
 
-            // Helper to get text or input value
-            const getValue = (col) => {
-                if (!col) return '';
-                const input = col.querySelector('input[type="text"]');
-                if (input) return input.value.trim();
-                return col.textContent.trim();
-            };
+            // 1. DISCONTINUED CHECK (15th Column)
+            const statusText = getText(cols[getIdx(15)]);
+            if (statusText.includes('단종') || row.textContent.includes('단종')) return null;
 
-            const getText = (col) => col ? col.textContent.trim() : '';
+            // 2. DATA EXTRACTION
+            const rawBrand = getText(cols[getIdx(1)]);
+            const rawModel = getText(cols[getIdx(2)]);
+            const rawSize = getText(cols[getIdx(4)]); // Detailed Size: 4th Col
 
-            /**
-             * Indices based on HTML analysis:
-             * 1: Brand (Text)
-             * 2: Model (Text)
-             * 3: Part No (Text) -> New!
-             * 4: Size (Text)
-             * 5: Unique Code (Input value)
-             * 9: Current Stock (Text)
-             * 10: Price (Input value)
-             */
-            const rawBrand = getText(cols[1]);
-            const rawModel = getText(cols[2]);
-            const rawPartNo = getText(cols[3]); // Internal Part No
-            const rawSize = getText(cols[4]);
+            // 3. CODE CAPTURE (Multi-Source for Robust Matching)
+            // 5th Col (Index 4+off) is '고유코드'
+            const uniqueCodeCol = cols[getIdx(5)];
+            const uniqueCodeInput = uniqueCodeCol ? uniqueCodeCol.querySelector('input') : null;
+            const uniqueCode = (uniqueCodeInput ? uniqueCodeInput.value : getText(uniqueCodeCol)).trim();
 
-            // USER REQUEST: Exclude discontinued products
-            // The status is typically in the last or second to last column
-            const lastColText = getText(cols[cols.length - 1]);
-            const secondLastColText = getText(cols[cols.length - 2]);
-            if (lastColText.includes('단종') || secondLastColText.includes('단종')) return null;
+            // Also search all inputs in the row for hidden IDs (it_id, st_id)
+            let itId = '';
+            let stId = '';
+            row.querySelectorAll('input').forEach(input => {
+                const name = input.name || '';
+                if (name.includes('it_id')) itId = input.value.trim();
+                if (name.includes('st_id')) stId = input.value.trim();
+            });
 
-            // USER REQUEST: Show all products from the list, even if Unique Code is missing.
-            const uniqueCode = getValue(cols[5]);
+            const stockQty = Number(getText(cols[getIdx(9)]).replace(/[^0-9]/g, '')) || 0;
+            const supplyPrice = Number(getValue(cols[getIdx(10)]).replace(/[^0-9]/g, '')) || 0;
 
-            // Stock is text in col 9 
-            const stockQty = Number(getText(cols[9]).replace(/[^0-9]/g, '')) || 0;
-
-            // Price is in input in col 10 (This is the "Supply Price" / 납품가)
-            const supplyPrice = Number(getValue(cols[10]).replace(/[^0-9]/g, '')) || 0;
+            if (!uniqueCode && !itId) return null;
 
             return {
                 brand: rawBrand,
                 model: rawModel,
-                size: rawSize,
-                partNo: uniqueCode, // This is the Unique Code (Input value)
-                internalCode: rawPartNo, // This is the Internal Part No (Text)
-                supplyPrice: supplyPrice, // Isolated API price
-                factoryPrice: 0, // Strictly 0 until merged with sheet
+                size: rawSize, // This contains Speed/Load/Origin as requested
+                partNo: uniqueCode, // Match Key for Sheet
+                itId: itId,
+                stId: stId,
+                internalCode: getText(cols[getIdx(3)]), // 3rd Column (Part No)
+                supplyPrice: supplyPrice,
+                factoryPrice: 0,
                 totalStock: stockQty,
                 discountRate: 0,
                 type: ''
             };
         }).filter(item => item !== null);
 
-        // Deduplicate Items
+        console.log(`[Parser] Successfully parsed ${parsedItems.length} items from shop.`);
         const uniqueItems = [];
         const seen = new Set();
 

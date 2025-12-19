@@ -25,90 +25,73 @@ const ProductList = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            // Fetch products (API) and Sheet Data (Price/DOT) in parallel
-            // GoogleSheetService now caches the sheet data, so this call is instant on subsequent searches
-            const [productData, sheetData, shopPrices] = await Promise.all([
-                inventoryService.fetchShopItems(filter.size),
+            const searchSizeNorm = normalizeSize(filter.size);
+            console.log(`[LoadData] Starting Sheet-First Search for: ${searchSizeNorm}`);
+
+            // 1. Fetch Google Sheet Data (Primary Source)
+            // 2. Fetch Blackcircles Inventory (Stock Source)
+            const [sheetData, productData] = await Promise.all([
                 googleSheetService.fetchSheetData(),
-                inventoryService.fetchFactoryPrices(filter.size)
+                inventoryService.fetchShopItems(filter.size)
             ]);
 
-            // Optimization: Create Lookup Maps for O(1) matching performance
-            const sheetCodeMap = new Map();
-            const sheetModelSizeMap = new Map();
+            // 3. Filter Sheet Data by Size and Price
+            // Rule: Must match normalized size AND have factoryPrice > 0
+            const filteredSheetEntries = sheetData.filter(d => {
+                const sheetSizeNorm = normalizeSize(d.size);
+                // match if sheet size (e.g. 2454519) matches search query
+                return sheetSizeNorm.includes(searchSizeNorm) && d.factoryPrice > 0;
+            });
 
-            const normalize = (val) => String(val || '').toLowerCase().replace(/[^a-z0-9]/g, '');
-            const normalizeSize = (val) => String(val || '').replace(/[^0-9]/g, '');
+            console.log(`[Sheet Data] Found ${filteredSheetEntries.length} matching entries in sheet.`);
 
-            if (sheetData && sheetData.length > 0) {
-                sheetData.forEach(d => {
-                    const code = String(d.code || '').trim();
-                    if (code && code !== '0') {
-                        sheetCodeMap.set(code, d);
-                    }
-                    const key = `${normalize(d.model)}|${normalizeSize(d.size)}`;
-                    // Store the first match found in sheet
-                    if (!sheetModelSizeMap.has(key)) {
-                        sheetModelSizeMap.set(key, d);
-                    }
+            // 4. Create Stock Map from Blackcircles data
+            // We've captured uniqueCode, itId, and internalCode. We match against ANY of them.
+            const findInventoryMatch = (sheetCode) => {
+                const sCode = String(sheetCode || '').trim();
+                return productData.find(p => {
+                    return String(p.partNo || '').trim() === sCode ||
+                        String(p.itId || '').trim() === sCode ||
+                        String(p.stId || '').trim() === sCode;
                 });
-            }
+            };
 
-            // Merge Sheet Data into Products (Override API Factory Price, Add DOTs)
-            const mergedProducts = productData.map(p => {
-                let finalFactoryPrice = 0;
-                let dotList = [];
+            // 5. Merge Sheet Data with Live Stock
+            const mergedProducts = filteredSheetEntries.map(s => {
+                const shopMatch = findInventoryMatch(s.code);
 
-                // 1. Match by Code (Try Unique Code first, then Internal Code)
-                const matchByUnique = p.partNo ? sheetCodeMap.get(String(p.partNo).trim()) : null;
-                const matchByInternal = p.internalCode ? sheetCodeMap.get(String(p.internalCode).trim()) : null;
-                const matchByCode = matchByUnique || matchByInternal;
-
-                // 2. Fallback Match by Model + Size (if no code match or no code)
-                const normModel = normalize(p.model);
-                const normSize = normalizeSize(p.size);
-                const modelSizeKey = `${normModel}|${normSize}`;
-                const matchByModelSize = sheetModelSizeMap.get(modelSizeKey);
-
-                const finalMatch = matchByCode || matchByModelSize;
-
-                if (finalMatch) {
-                    if (Number(finalMatch.factoryPrice) > 0) {
-                        finalFactoryPrice = Number(finalMatch.factoryPrice);
-                        let matchType = 'Model+Size';
-                        if (matchByUnique) matchType = 'Unique Code';
-                        else if (matchByInternal) matchType = 'Internal Code';
-
-                        console.log(`[Match Success - Sheet (${matchType})] ${p.brand} ${p.model} -> Price: ${finalFactoryPrice}`);
-                    }
-                    dotList = finalMatch.dotList || [];
+                if (shopMatch) {
+                    console.log(`[Stock Success] Matched Sheet Code: ${s.code} with Shop! Stock: ${shopMatch.totalStock}`);
                 }
 
-                // 3. NEW: Fallback to Shop Scraped Price if still 0
-                if (finalFactoryPrice === 0 && shopPrices) {
-                    if (shopPrices[modelSizeKey]) {
-                        finalFactoryPrice = shopPrices[modelSizeKey];
-                        console.log(`[Match Success - Shop] ${p.model} ${p.size} -> Price: ${finalFactoryPrice}`);
-                    }
-                }
-
+                // Priority for display: Sheet Data for Price/DOT/Brand
+                // Priority for Size: Detailed string from Shop if available
                 return {
-                    ...p,
-                    factoryPrice: finalFactoryPrice,
-                    dotList: dotList
+                    brand: s.brand || (shopMatch?.brand),
+                    model: s.model || (shopMatch?.model),
+                    size: shopMatch ? shopMatch.size : s.size, // SHOP size has more detail (4P, 105W etc)
+                    partNo: s.code, // From sheet
+                    factoryPrice: s.factoryPrice, // From sheet
+                    dotList: s.dotList || [], // From sheet
+                    totalStock: shopMatch ? shopMatch.totalStock : 0, // FROM SHOP
+                    supplyPrice: shopMatch ? shopMatch.supplyPrice : 0,
+                    discountRate: 0,
+                    internalCode: s.code
                 };
+            }).filter(p => {
+                return p.factoryPrice > 0;
             });
 
             console.log(`[LoadData] Final display list: ${mergedProducts.length} items.`);
 
-            // Default Sort by Stock Descending as requested
+            // Default Sort by Stock Descending
             const sortedProducts = [...mergedProducts].sort((a, b) => (b.totalStock || 0) - (a.totalStock || 0));
 
             setProducts(sortedProducts);
             setSortConfig({ key: 'totalStock', direction: 'desc' });
             setSelectedItems([]); // Clear selection when new search performed
         } catch (error) {
-            console.error("Failed to load shop data:", error);
+            console.error('Data Loading Error:', error);
         } finally {
             setLoading(false);
         }
@@ -364,14 +347,14 @@ const ProductList = () => {
     return (
         <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-800 overflow-hidden">
             {/* Toolbar */}
-            <div className="p-5 border-b border-slate-800 bg-slate-900 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3">
-                    <div className="relative">
+            <div className="p-4 border-b border-slate-800 bg-slate-900">
+                <div className="flex flex-wrap items-center gap-3">
+                    <div className="relative flex-1 min-w-[200px] md:flex-none md:w-52">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-500" size={18} />
                         <input
                             type="text"
-                            placeholder="사이즈 검색 (예: 2454518)"
-                            className="pl-10 pr-4 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 w-64 placeholder:text-slate-600"
+                            placeholder="사이즈 검색"
+                            className="w-full pl-10 pr-4 py-2 border border-slate-700 bg-slate-800 text-slate-100 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 placeholder:text-slate-600"
                             value={filter.size}
                             onChange={(e) => setFilter({ ...filter, size: e.target.value })}
                             onKeyDown={(e) => e.key === 'Enter' && filter.size.trim() && loadData()}
@@ -379,7 +362,7 @@ const ProductList = () => {
                     </div>
 
                     <select
-                        className="pl-3 pr-8 py-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800 text-slate-100"
+                        className="flex-1 md:flex-none pl-3 pr-8 py-2 border border-slate-700 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-slate-800 text-slate-100 min-w-[120px]"
                         value={filter.brand}
                         onChange={(e) => setFilter({ ...filter, brand: e.target.value })}
                     >
@@ -393,43 +376,51 @@ const ProductList = () => {
                     <button
                         onClick={loadData}
                         disabled={!filter.size.trim()}
-                        className="flex items-center gap-2 px-6 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95"
+                        className="flex-1 md:flex-none flex items-center justify-center gap-2 px-4 py-2 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-700 disabled:text-slate-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95"
                     >
-                        <Search size={18} />
-                        검색
+                        <Search size={16} />
+                        <span>검색</span>
                     </button>
 
-                    {selectedItems.length > 0 && (
-                        <button
-                            onClick={addToCart}
-                            className="flex items-center gap-2 px-6 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-left-2 duration-300"
-                        >
-                            <ShoppingBag size={18} />
-                            장바구니 담기 ({selectedItems.length})
-                        </button>
-                    )}
+                    <div className="flex gap-2 w-full md:w-auto">
+                        {selectedItems.length > 0 && (
+                            <button
+                                onClick={addToCart}
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-amber-600 hover:bg-amber-500 text-white font-bold rounded-lg transition-all shadow-lg active:scale-95 animate-in fade-in slide-in-from-left-2 duration-300"
+                            >
+                                <ShoppingBag size={16} />
+                                <span className="whitespace-nowrap text-sm">담기 ({selectedItems.length})</span>
+                            </button>
+                        )}
 
-                    {cartItems.length > 0 && (
-                        <button
-                            onClick={() => setShowShareModal(true)}
-                            className="flex items-center gap-2 px-6 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-all shadow-lg animate-in fade-in zoom-in duration-300"
-                        >
-                            <ShoppingCart size={18} />
-                            장바구니 ({cartItems.length})
-                        </button>
-                    )}
+                        {cartItems.length > 0 && (
+                            <button
+                                onClick={() => setShowShareModal(true)}
+                                className="flex-1 md:flex-none flex items-center justify-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-500 text-white font-bold rounded-lg transition-all shadow-lg animate-in fade-in zoom-in duration-300"
+                            >
+                                <ShoppingCart size={16} />
+                                <span className="whitespace-nowrap text-sm">장바구니 ({cartItems.length})</span>
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={loadData}
-                        className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-full transition-colors"
-                        title="새로고침"
-                    >
-                        <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
-                    </button>
-                    <div className="text-sm text-slate-400">
-                        총 <span className="font-bold text-slate-100">{filteredProducts.length}</span>개 상품
+                <div className="mt-4 pt-4 border-t border-slate-800/50 flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <button
+                            onClick={loadData}
+                            className="p-2 text-slate-400 hover:text-blue-400 hover:bg-slate-800 rounded-full transition-colors"
+                            title="새로고침"
+                        >
+                            <RefreshCw size={18} className={loading ? "animate-spin" : ""} />
+                        </button>
+                        <div className="text-sm text-slate-400">
+                            총 <span className="font-bold text-slate-100">{filteredProducts.length}</span>개 상품
+                        </div>
+                    </div>
+
+                    <div className="text-[10px] text-slate-500 italic hidden sm:block">
+                        * 공장도 가격이 있는 상품만 표시됩니다.
                     </div>
                 </div>
             </div>
