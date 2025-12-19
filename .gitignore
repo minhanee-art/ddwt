@@ -1,1 +1,11 @@
 node_modules
+dist
+.vercel
+.vscode
+*.html
+!index.html
+*.csv
+!sheet_data.csv
+*.txt
+!cookies.txt
+.DS_Store

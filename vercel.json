@@ -3,15 +3,12 @@
     "framework": "vite",
     "rewrites": [
         {
-            "source": "/api/inventory",
-            "destination": "/api/inventory.js"
+            "source": "/api/(.*)",
+            "destination": "/api/$1"
         },
         {
-            "source": "/(.*)",
+            "source": "/((?!api/).*)",
             "destination": "/index.html"
         }
-    ],
-    "env": {
-        "NODE_VERSION": "18"
-    }
+    ]
 }
