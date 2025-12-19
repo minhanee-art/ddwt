@@ -1,0 +1,17 @@
+{
+    "version": 2,
+    "framework": "vite",
+    "rewrites": [
+        {
+            "source": "/api/inventory",
+            "destination": "/api/inventory.js"
+        },
+        {
+            "source": "/(.*)",
+            "destination": "/index.html"
+        }
+    ],
+    "env": {
+        "NODE_VERSION": "18"
+    }
+}
