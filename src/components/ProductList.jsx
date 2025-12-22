@@ -13,6 +13,33 @@ const ProductList = () => {
     const [selectedItems, setSelectedItems] = useState([]);
     const [cartItems, setCartItems] = useState([]); // Array of objects: { product, qty }
     const [showShareModal, setShowShareModal] = useState(false);
+    const [expandedDotItems, setExpandedDotItems] = useState([]); // Track expanded DOT lists on mobile
+
+    /**
+     * Get Tailwind color classes based on DOT year
+     * @param {string} dot - The DOT string (e.g., "3524")
+     */
+    const getDotColor = (dot) => {
+        if (!dot) return 'bg-slate-800 text-slate-500 border-white/5';
+        const year = dot.slice(-2);
+        switch (year) {
+            case '24': return 'bg-sky-500/20 text-sky-400 border-sky-500/20'; // Sky Blue
+            case '23': return 'bg-red-500/20 text-red-400 border-red-500/20'; // Red
+            case '22': return 'bg-green-500/20 text-green-400 border-green-500/20'; // Green
+            case '21': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'; // Yellow
+            default: return 'bg-slate-800 text-slate-500 border-white/5';
+        }
+    };
+
+    const toggleDotExpansion = (productIndex, e) => {
+        e.stopPropagation(); // Prevent card selection logic
+        setExpandedDotItems(prev => {
+            if (prev.includes(productIndex)) {
+                return prev.filter(i => i !== productIndex);
+            }
+            return [...prev, productIndex];
+        });
+    };
 
     useEffect(() => {
         // Only clear if empty, no auto-load
@@ -453,7 +480,7 @@ const ProductList = () => {
                                 <th className="px-5 py-4 text-right cursor-pointer group" onClick={() => handleSort('totalStock')}>
                                     <div className="flex items-center justify-end gap-2">재고 <SortIcon columnKey="totalStock" /></div>
                                 </th>
-                                <th className="px-5 py-4 text-center">DOT</th>
+                                <th className="px-5 py-4 text-center min-w-[200px]">DOT</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-white/5">
@@ -514,8 +541,12 @@ const ProductList = () => {
                                                 {p.totalStock > 0 ? <span className="text-slate-400">{p.totalStock.toLocaleString()}</span> : <span className="text-red-500/50">OUT</span>}
                                             </td>
                                             <td className="px-5 py-4 text-center">
-                                                <div className="flex flex-col gap-0.5 max-h-12 overflow-y-auto no-scrollbar">
-                                                    {p.dotList?.map((dot, i) => <div key={i} className="text-[10px] text-slate-600 whitespace-nowrap">{dot}</div>)}
+                                                <div className="flex flex-wrap gap-1 justify-center max-h-16 overflow-y-auto no-scrollbar">
+                                                    {p.dotList?.map((dot, i) => (
+                                                        <span key={i} className={`text-[10px] px-1.5 py-0.5 rounded border ${getDotColor(dot)} whitespace-nowrap`}>
+                                                            {dot}
+                                                        </span>
+                                                    ))}
                                                 </div>
                                             </td>
                                         </tr>
@@ -591,11 +622,39 @@ const ProductList = () => {
                                     </div>
 
                                     <div className="mt-4 flex items-end justify-between relative z-10">
-                                        <div className="flex flex-wrap gap-1 max-w-[60%]">
-                                            {p.dotList?.slice(0, 3).map((dot, i) => (
-                                                <span key={i} className="text-[9px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-white/5">{dot}</span>
-                                            ))}
-                                            {p.dotList?.length > 3 && <span className="text-[9px] text-slate-600">+{p.dotList.length - 3} more</span>}
+                                        <div className="flex flex-wrap gap-1 max-w-[65%]">
+                                            {/* Show all if expanded, otherwise show first 3 */}
+                                            {(() => {
+                                                const isExpanded = expandedDotItems.includes(idx);
+                                                const visibleDots = isExpanded ? p.dotList : p.dotList?.slice(0, 3);
+                                                const remainingCount = (p.dotList?.length || 0) - 3;
+
+                                                return (
+                                                    <>
+                                                        {visibleDots?.map((dot, i) => (
+                                                            <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded border ${getDotColor(dot)}`}>
+                                                                {dot}
+                                                            </span>
+                                                        ))}
+                                                        {!isExpanded && remainingCount > 0 && (
+                                                            <button
+                                                                onClick={(e) => toggleDotExpansion(idx, e)}
+                                                                className="text-[9px] text-slate-400 font-bold bg-slate-800 px-1.5 py-0.5 rounded border border-white/5 hover:bg-slate-700 hover:text-white transition-colors"
+                                                            >
+                                                                +{remainingCount} more
+                                                            </button>
+                                                        )}
+                                                        {isExpanded && p.dotList?.length > 3 && (
+                                                            <button
+                                                                onClick={(e) => toggleDotExpansion(idx, e)}
+                                                                className="text-[9px] text-slate-500 hover:text-slate-300 ml-1"
+                                                            >
+                                                                (접기)
+                                                            </button>
+                                                        )}
+                                                    </>
+                                                );
+                                            })()}
                                         </div>
                                         <div className="text-right">
                                             <div className="text-[10px] text-blue-500 font-black uppercase tracking-widest leading-none mb-1">Sales Price</div>
