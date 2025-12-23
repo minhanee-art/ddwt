@@ -20,14 +20,16 @@ const ProductList = () => {
      * @param {string} dot - The DOT string (e.g., "3524")
      */
     const getDotColor = (dot) => {
-        if (!dot) return 'bg-slate-800 text-slate-500 border-white/5';
-        const year = dot.slice(-2);
+        if (!dot) return 'bg-slate-100 text-slate-400 border-slate-200';
+
+        // Extract year from strings like "3524", "DOT#1-1: 3524", "3524.42"
+        const yearMatch = dot.match(/(\d{2})(\d{2})(?:\.\d+)?$/) || dot.match(/(\d{2})(\d{2})/);
+        const year = yearMatch ? yearMatch[2] : '';
+
         switch (year) {
-            case '24': return 'bg-sky-500/20 text-sky-400 border-sky-500/20'; // Sky Blue
-            case '23': return 'bg-red-500/20 text-red-400 border-red-500/20'; // Red
-            case '22': return 'bg-green-500/20 text-green-400 border-green-500/20'; // Green
-            case '21': return 'bg-yellow-500/20 text-yellow-400 border-yellow-500/20'; // Yellow
-            default: return 'bg-slate-800 text-slate-500 border-white/5';
+            case '25': return 'bg-slate-100 text-slate-600 border-slate-200'; // Stock color (Slate)
+            case '24': return 'bg-red-50 text-red-600 border-red-200'; // Red
+            default: return 'bg-slate-50 text-slate-400 border-slate-200';
         }
     };
 
@@ -319,7 +321,7 @@ const ProductList = () => {
 
     const generateShareText = () => {
         let text = "[대동타이어 견적안내]\n";
-        text += "Tel. 1566-1342\n\n";
+        text += "Tel. 053-254-5705\n\n";
         let totalSum = 0;
         cartItems.forEach((item, i) => {
             const p = item.product;
@@ -372,9 +374,9 @@ const ProductList = () => {
     };
 
     return (
-        <div className="bg-slate-900 rounded-xl shadow-2xl border border-slate-800 overflow-hidden">
+        <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
             {/* Premium Toolbar */}
-            <div className="p-5 border-b border-white/5 bg-slate-900/50">
+            <div className="p-5 border-b border-slate-100 bg-slate-50/50">
                 <div className="flex flex-col lg:flex-row lg:items-center gap-4">
                     {/* Search & Brand Group */}
                     <div className="flex flex-col sm:flex-row flex-1 gap-3">
@@ -383,7 +385,7 @@ const ProductList = () => {
                             <input
                                 type="text"
                                 placeholder="규격 입력 (예: 2454518)"
-                                className="w-full pl-10 pr-4 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/50 focus:border-blue-500/50 transition-all placeholder:text-slate-600"
+                                className="w-full pl-10 pr-4 py-3 bg-white border border-slate-200 rounded-xl text-sm font-medium focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500/50 transition-all placeholder:text-slate-400"
                                 value={filter.size}
                                 onChange={(e) => setFilter({ ...filter, size: e.target.value })}
                                 onKeyDown={(e) => e.key === 'Enter' && filter.size.trim() && loadData()}
@@ -391,13 +393,13 @@ const ProductList = () => {
                         </div>
 
                         <select
-                            className="w-full sm:w-48 pl-4 pr-10 py-3 bg-slate-800/50 border border-white/10 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/50 transition-all appearance-none cursor-pointer"
+                            className="w-full sm:w-48 pl-4 pr-10 py-3 bg-white border border-slate-200 rounded-xl text-sm font-bold focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all appearance-none cursor-pointer"
                             value={filter.brand}
                             onChange={(e) => setFilter({ ...filter, brand: e.target.value })}
                             style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2364748b'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`, backgroundPosition: 'right 12px center', backgroundSize: '16px', backgroundRepeat: 'no-repeat' }}
                         >
                             {brandOptions.map(b => (
-                                <option key={b} value={b} className="bg-slate-900">
+                                <option key={b} value={b} className="bg-white">
                                     {b === 'Hankook' ? '한국+라우펜' : getBrandDisplayName(b)}
                                 </option>
                             ))}
@@ -409,7 +411,7 @@ const ProductList = () => {
                         <button
                             onClick={loadData}
                             disabled={!filter.size.trim() || loading}
-                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-500 disabled:bg-slate-800 disabled:text-slate-600 text-white font-black rounded-xl transition-all shadow-lg shadow-blue-900/20 active:scale-[0.98]"
+                            className="flex-1 lg:flex-none flex items-center justify-center gap-2 px-6 py-3 bg-blue-600 hover:bg-blue-700 disabled:bg-slate-100 disabled:text-slate-400 text-white font-black rounded-xl transition-all shadow-md shadow-blue-500/10 active:scale-[0.98]"
                         >
                             {loading ? <RefreshCw size={18} className="animate-spin" /> : <Search size={18} />}
                             <span className="whitespace-nowrap">검색하기</span>
@@ -441,8 +443,8 @@ const ProductList = () => {
 
                 <div className="mt-4 flex items-center justify-between text-[11px] font-bold tracking-wider">
                     <div className="flex items-center gap-3 text-slate-500 uppercase">
-                        <span>Result Count</span>
-                        <span className="text-blue-400 bg-blue-400/10 px-2 py-0.5 rounded">{filteredProducts.length}</span>
+                        <span>품목</span>
+                        <span className="text-blue-600 bg-blue-50 px-2 py-0.5 rounded border border-blue-100">{filteredProducts.length}</span>
                     </div>
                     <div className="text-slate-600 italic lg:block hidden">
                         * 공장도 가격이 등록된 상품만 리스팅됩니다.
@@ -455,13 +457,13 @@ const ProductList = () => {
                 {/* Desktop Table */}
                 <div className="hidden lg:block overflow-x-auto">
                     <table className="w-full text-left text-sm">
-                        <thead className="bg-slate-800/30 text-slate-500 font-bold uppercase tracking-wider border-b border-white/5">
+                        <thead className="bg-slate-50 text-slate-500 font-bold uppercase tracking-wider border-b border-slate-200">
                             <tr>
                                 <th className="px-5 py-4 w-12 text-center">
-                                    <button onClick={toggleSelectAll} className="hover:text-blue-400 transition-colors">
+                                    <button onClick={toggleSelectAll} className="hover:text-blue-600 transition-colors">
                                         {selectedItems.length === filteredProducts.length && filteredProducts.length > 0
                                             ? <CheckSquare size={20} className="text-blue-500" />
-                                            : <Square size={20} />
+                                            : <Square size={20} className="text-slate-300" />
                                         }
                                     </button>
                                 </th>
@@ -473,17 +475,17 @@ const ProductList = () => {
                                 </th>
                                 <th className="px-5 py-4">규격</th>
                                 <th className="px-5 py-4 text-right cursor-pointer group" onClick={() => handleSort('factoryPrice')}>
-                                    <div className="flex items-center justify-end gap-2">공장도 <SortIcon columnKey="factoryPrice" /></div>
+                                    <div className="flex items-center justify-end gap-2 text-slate-600">공장도 <SortIcon columnKey="factoryPrice" /></div>
                                 </th>
-                                <th className="px-5 py-4 text-center">DC(%)</th>
+                                <th className="px-5 py-4 text-center">할인(%)</th>
                                 <th className="px-5 py-4 text-right font-black text-slate-400">판매가</th>
                                 <th className="px-5 py-4 text-right cursor-pointer group" onClick={() => handleSort('totalStock')}>
-                                    <div className="flex items-center justify-end gap-2">재고 <SortIcon columnKey="totalStock" /></div>
+                                    <div className="flex items-center justify-end gap-2 text-slate-600">재고 <SortIcon columnKey="totalStock" /></div>
                                 </th>
                                 <th className="px-5 py-4 text-center min-w-[200px]">DOT</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-white/5">
+                        <tbody className="divide-y divide-slate-100">
                             {loading ? (
                                 <tr>
                                     <td colSpan="9" className="py-24 text-center">
@@ -509,21 +511,21 @@ const ProductList = () => {
                                     const selected = isSelected(p);
 
                                     return (
-                                        <tr key={idx} className={`group transition-premium hover:bg-blue-600/5 ${selected ? 'bg-blue-600/10' : ''}`}>
+                                        <tr key={idx} className={`group transition-premium hover:bg-slate-50 ${selected ? 'bg-blue-50' : ''}`}>
                                             <td className="px-5 py-4 text-center">
-                                                <button onClick={() => toggleSelectItem(p)} className={`transition-colors ${selected ? 'text-blue-500' : 'text-slate-700 group-hover:text-slate-500'}`}>
+                                                <button onClick={() => toggleSelectItem(p)} className={`transition-colors ${selected ? 'text-blue-500' : 'text-slate-300 group-hover:text-slate-400'}`}>
                                                     {selected ? <CheckSquare size={20} /> : <Square size={20} />}
                                                 </button>
                                             </td>
-                                            <td className="px-5 py-4 font-black text-slate-200">{getBrandDisplayName(p.brand)}</td>
-                                            <td className="px-5 py-4 font-bold text-slate-400">{p.model}</td>
+                                            <td className="px-5 py-4 font-black text-slate-700">{getBrandDisplayName(p.brand)}</td>
+                                            <td className="px-5 py-4 font-bold text-slate-500">{p.model}</td>
                                             <td className="px-5 py-4">
-                                                <span className="bg-slate-800/50 px-2 py-1 rounded font-mono text-[11px] border border-white/5 text-slate-400">{p.size}</span>
+                                                <span className="bg-slate-100 px-2 py-1 rounded font-mono text-[11px] border border-slate-200 text-slate-600">{p.size}</span>
                                             </td>
                                             <td className="px-5 py-4 text-right">
                                                 <input
                                                     type="text"
-                                                    className="w-24 text-right bg-slate-800/30 border border-white/5 rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                                    className="w-24 text-right bg-transparent border-none rounded px-2 py-1 text-xs focus:ring-1 focus:ring-blue-500/20 outline-none transition-all text-slate-600 font-medium"
                                                     value={factoryPrice ? factoryPrice.toLocaleString() : ''}
                                                     onChange={(e) => handlePriceUpdate(p, 'factoryPrice', e.target.value)}
                                                 />
@@ -531,14 +533,14 @@ const ProductList = () => {
                                             <td className="px-5 py-4 text-center">
                                                 <input
                                                     type="text"
-                                                    className="w-12 text-center bg-blue-500/5 border border-blue-500/10 rounded px-1 py-1 text-xs font-black text-blue-400 focus:ring-1 focus:ring-blue-500/50 outline-none transition-all"
+                                                    className="w-12 text-center bg-blue-50 border border-blue-100 rounded px-1 py-1 text-xs font-black text-blue-600 focus:ring-1 focus:ring-blue-500/20 outline-none transition-all"
                                                     value={discountRate}
                                                     onChange={(e) => handlePriceUpdate(p, 'discountRate', e.target.value.replace(/[^0-9]/g, ''))}
                                                 />
                                             </td>
-                                            <td className="px-5 py-4 text-right font-black text-blue-400 tabular-nums">{discountedPrice.toLocaleString()}</td>
+                                            <td className="px-5 py-4 text-right font-black text-blue-600 tabular-nums">{discountedPrice.toLocaleString()}</td>
                                             <td className="px-5 py-4 text-right font-black tabular-nums">
-                                                {p.totalStock > 0 ? <span className="text-slate-400">{p.totalStock.toLocaleString()}</span> : <span className="text-red-500/50">OUT</span>}
+                                                {p.totalStock > 0 ? <span className="text-slate-600">{p.totalStock.toLocaleString()}</span> : <span className="text-red-500/70 font-medium">품절</span>}
                                             </td>
                                             <td className="px-5 py-4 text-center">
                                                 <div className="flex flex-wrap gap-1 justify-center max-h-16 overflow-y-auto no-scrollbar">
@@ -577,44 +579,44 @@ const ProductList = () => {
                             const selected = isSelected(p);
 
                             return (
-                                <div key={idx} className={`relative p-5 rounded-2xl border transition-premium overflow-hidden ${selected ? 'bg-blue-600/20 border-blue-500/50 shadow-lg shadow-blue-900/40' : 'bg-slate-900/50 border-white/5'}`}>
+                                <div key={idx} className={`relative p-5 rounded-2xl border transition-premium overflow-hidden ${selected ? 'bg-blue-50 border-blue-200 shadow-md shadow-blue-500/10' : 'bg-white border-slate-200 shadow-sm'}`}>
                                     {/* Selection Glow */}
-                                    {selected && <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/20 blur-[60px] pointer-events-none"></div>}
+                                    {selected && <div className="absolute top-0 right-0 w-32 h-32 bg-blue-500/5 blur-[60px] pointer-events-none"></div>}
 
                                     <div className="flex justify-between items-start mb-4 relative z-10">
                                         <div onClick={() => toggleSelectItem(p)} className="cursor-pointer">
                                             <div className="flex items-center gap-3 mb-1">
-                                                <span className="px-2 py-0.5 bg-blue-600 text-[10px] font-black rounded uppercase tracking-tighter shadow-lg shadow-blue-900/40">{getBrandDisplayName(p.brand)}</span>
-                                                <span className={`transition-colors ${selected ? 'text-blue-400' : 'text-slate-600'}`}>
+                                                <span className="px-2 py-0.5 bg-blue-600 text-[10px] font-black text-white rounded uppercase tracking-tighter shadow-sm">{getBrandDisplayName(p.brand)}</span>
+                                                <span className={`transition-colors ${selected ? 'text-blue-500' : 'text-slate-300'}`}>
                                                     {selected ? <CheckSquare size={22} /> : <Square size={22} />}
                                                 </span>
                                             </div>
-                                            <h3 className="text-lg font-black text-white leading-tight">{p.model}</h3>
+                                            <h3 className="text-lg font-black text-slate-900 leading-tight">{p.model}</h3>
                                             <p className="text-xs font-mono text-slate-500 mt-1">{p.size}</p>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mb-1">Stock</div>
-                                            <div className={`text-xl font-black italic ${p.totalStock > 0 ? 'text-slate-300' : 'text-red-500/50'}`}>
-                                                {p.totalStock > 0 ? p.totalStock.toLocaleString() : 'OUT'}
+                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">재고</div>
+                                            <div className={`text-xl font-black italic ${p.totalStock > 0 ? 'text-slate-800' : 'text-red-500/70'}`}>
+                                                {p.totalStock > 0 ? p.totalStock.toLocaleString() : '품절'}
                                             </div>
                                         </div>
                                     </div>
 
-                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-white/5 relative z-10">
+                                    <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 relative z-10">
                                         <div>
-                                            <label className="text-[10px] text-slate-600 font-black uppercase mb-1 block">Factory Price</label>
+                                            <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block">공장도</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-slate-800/50 border border-white/5 rounded-lg px-3 py-2 text-sm font-bold text-slate-300 focus:ring-1 focus:ring-blue-500/50 outline-none"
+                                                className="w-full bg-transparent border-none px-0 py-2 text-sm font-bold text-slate-700 focus:ring-1 focus:ring-blue-500/20 outline-none"
                                                 value={factoryPrice ? factoryPrice.toLocaleString() : ''}
                                                 onChange={(e) => handlePriceUpdate(p, 'factoryPrice', e.target.value)}
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-slate-600 font-black uppercase mb-1 block">Discount %</label>
+                                            <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block">할인율 %</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-blue-500/10 border border-blue-500/20 rounded-lg px-3 py-2 text-sm font-black text-blue-400 focus:ring-1 focus:ring-blue-500/50 outline-none"
+                                                className="w-full bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm font-black text-blue-600 focus:ring-1 focus:ring-blue-500/20 outline-none"
                                                 value={discountRate}
                                                 onChange={(e) => handlePriceUpdate(p, 'discountRate', e.target.value.replace(/[^0-9]/g, ''))}
                                             />
@@ -632,14 +634,14 @@ const ProductList = () => {
                                                 return (
                                                     <>
                                                         {visibleDots?.map((dot, i) => (
-                                                            <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded border ${getDotColor(dot)}`}>
+                                                            <span key={i} className={`text-[9px] px-1.5 py-0.5 rounded border ${getDotColor(dot)} font-medium`}>
                                                                 {dot}
                                                             </span>
                                                         ))}
                                                         {!isExpanded && remainingCount > 0 && (
                                                             <button
                                                                 onClick={(e) => toggleDotExpansion(idx, e)}
-                                                                className="text-[9px] text-slate-400 font-bold bg-slate-800 px-1.5 py-0.5 rounded border border-white/5 hover:bg-slate-700 hover:text-white transition-colors"
+                                                                className="text-[9px] text-slate-500 font-bold bg-slate-100 px-1.5 py-0.5 rounded border border-slate-200 hover:bg-slate-200 transition-colors"
                                                             >
                                                                 +{remainingCount} more
                                                             </button>
@@ -647,7 +649,7 @@ const ProductList = () => {
                                                         {isExpanded && p.dotList?.length > 3 && (
                                                             <button
                                                                 onClick={(e) => toggleDotExpansion(idx, e)}
-                                                                className="text-[9px] text-slate-500 hover:text-slate-300 ml-1"
+                                                                className="text-[9px] text-slate-500 hover:text-slate-800 ml-1 font-bold"
                                                             >
                                                                 (접기)
                                                             </button>
@@ -657,9 +659,9 @@ const ProductList = () => {
                                             })()}
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] text-blue-500 font-black uppercase tracking-widest leading-none mb-1">Sales Price</div>
-                                            <div className="text-2xl font-black text-blue-400 drop-shadow-[0_0_10px_rgba(37,99,235,0.4)]">
-                                                {discountedPrice.toLocaleString()}<span className="text-sm ml-0.5">₩</span>
+                                            <div className="text-[10px] text-blue-600 font-black uppercase tracking-widest leading-none mb-1">판매가</div>
+                                            <div className="text-2xl font-black text-blue-600">
+                                                {discountedPrice.toLocaleString()}<span className="text-sm ml-0.5 font-medium">₩</span>
                                             </div>
                                         </div>
                                     </div>
@@ -675,7 +677,7 @@ const ProductList = () => {
                 <div className="lg:hidden fixed bottom-6 left-1/2 -translate-x-1/2 w-[90%] z-40 animate-in slide-in-from-bottom-8">
                     <button
                         onClick={addToCart}
-                        className="w-full py-4 bg-gradient-to-r from-amber-500 via-orange-500 to-amber-600 text-slate-900 font-black rounded-2xl shadow-2xl flex items-center justify-center gap-3 active:scale-[0.98] transition-transform overflow-hidden group"
+                        className="w-full py-4 bg-blue-600 text-white font-black rounded-2xl shadow-xl shadow-blue-500/30 flex items-center justify-center gap-3 active:scale-[0.98] transition-transform overflow-hidden group"
                     >
                         <ShoppingBag size={24} className="group-hover:animate-bounce" />
                         <span className="text-lg">장바구니에 {selectedItems.length}개 추가</span>
@@ -694,29 +696,29 @@ const ProductList = () => {
 
             {/* Premium Share Modal */}
             {showShareModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-950/40 backdrop-blur-sm animate-in fade-in duration-300">
-                    <div className="bg-slate-900 border-t sm:border border-white/10 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-0 sm:p-4 bg-slate-900/10 backdrop-blur-sm animate-in fade-in duration-300">
+                    <div className="bg-white border-t sm:border border-slate-200 rounded-t-3xl sm:rounded-3xl w-full max-w-2xl h-[92vh] sm:h-auto sm:max-h-[90vh] flex flex-col shadow-2xl overflow-hidden animate-in slide-in-from-bottom-10 duration-500">
                         {/* Header */}
-                        <div className="p-6 border-b border-white/5 flex items-center justify-between bg-slate-800/30">
+                        <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
                             <div>
-                                <h3 className="text-xl font-black text-white flex items-center gap-2">
-                                    <Share2 className="text-blue-500" />
+                                <h3 className="text-xl font-black text-slate-900 flex items-center gap-2">
+                                    <Share2 className="text-blue-600" />
                                     견적서 생성
                                 </h3>
-                                <p className="text-slate-500 text-xs font-bold uppercase tracking-widest mt-1">
+                                <p className="text-slate-400 text-xs font-bold uppercase tracking-widest mt-1">
                                     {cartItems.length} ITEMS IN BASKET
                                 </p>
                             </div>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={clearCart}
-                                    className="px-3 py-1.5 text-[10px] font-black text-red-400 hover:bg-red-400/10 rounded-lg transition-colors border border-red-400/30 uppercase tracking-tighter"
+                                    className="px-3 py-1.5 text-[10px] font-black text-red-500 hover:bg-red-50 rounded-lg transition-colors border border-red-200 uppercase tracking-tighter"
                                 >
                                     Empty
                                 </button>
                                 <button
                                     onClick={() => setShowShareModal(false)}
-                                    className="p-2 hover:bg-white/5 rounded-full text-slate-500 hover:text-white transition-premium"
+                                    className="p-2 hover:bg-slate-100 rounded-full text-slate-400 hover:text-slate-900 transition-premium"
                                 >
                                     <X size={24} />
                                 </button>
@@ -730,10 +732,10 @@ const ProductList = () => {
                                 const discountedPrice = Math.floor((p.factoryPrice || 0) * (1 - (p.discountRate || 0) / 100));
                                 const subtotal = discountedPrice * item.qty;
                                 return (
-                                    <div key={i} className="bg-slate-800/30 border border-white/5 rounded-2xl p-4 flex flex-col gap-4 group relative">
+                                    <div key={i} className="bg-slate-50 border border-slate-200 rounded-2xl p-4 flex flex-col gap-4 group relative">
                                         <button
                                             onClick={() => removeFromCart(item)}
-                                            className="absolute top-2 right-2 w-8 h-8 bg-slate-800 text-slate-500 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-premium shadow-lg z-10"
+                                            className="absolute top-2 right-2 w-8 h-8 bg-white text-slate-400 border border-slate-100 rounded-full flex items-center justify-center opacity-100 sm:opacity-0 group-hover:opacity-100 hover:bg-red-500 hover:text-white transition-premium shadow-sm z-10"
                                         >
                                             <X size={16} />
                                         </button>
@@ -741,31 +743,31 @@ const ProductList = () => {
                                         <div className="flex justify-between items-start pr-8">
                                             <div className="space-y-1">
                                                 <div className="flex items-center gap-2">
-                                                    <span className="bg-blue-600/20 text-blue-400 text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
+                                                    <span className="bg-blue-600 text-white text-[9px] font-black px-1.5 py-0.5 rounded uppercase tracking-tighter">
                                                         {getBrandDisplayName(p.brand)}
                                                     </span>
-                                                    <span className="text-white font-black text-sm">{p.model}</span>
+                                                    <span className="text-slate-900 font-black text-sm">{p.model}</span>
                                                 </div>
                                                 <div className="text-slate-500 text-[11px] font-bold font-mono uppercase">{p.size}</div>
                                             </div>
                                             <div className="text-right">
-                                                <div className="text-[9px] text-slate-600 font-black uppercase mb-1">Total</div>
-                                                <div className="text-blue-400 font-black text-lg">{subtotal.toLocaleString()}원</div>
+                                                <div className="text-[9px] text-slate-400 font-black uppercase mb-1">Total</div>
+                                                <div className="text-blue-600 font-black text-lg">{subtotal.toLocaleString()}원</div>
                                             </div>
                                         </div>
 
-                                        <div className="flex items-center justify-between pt-4 border-t border-white/5">
-                                            <div className="flex items-center bg-slate-900/50 rounded-xl p-1 border border-white/5 shadow-inner">
+                                        <div className="flex items-center justify-between pt-4 border-t border-slate-200">
+                                            <div className="flex items-center bg-white rounded-xl p-1 border border-slate-200 shadow-sm">
                                                 <button
                                                     onClick={() => updateCartQty(item, -1)}
-                                                    className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-xl"
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors font-black text-xl"
                                                 >
                                                     -
                                                 </button>
-                                                <span className="w-10 text-center font-black text-blue-500 text-lg tabular-nums">{item.qty}</span>
+                                                <span className="w-10 text-center font-black text-blue-600 text-lg tabular-nums">{item.qty}</span>
                                                 <button
                                                     onClick={() => updateCartQty(item, 1)}
-                                                    className="w-10 h-10 flex items-center justify-center text-slate-500 hover:text-white hover:bg-slate-800 rounded-lg transition-colors font-black text-xl"
+                                                    className="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-900 hover:bg-slate-50 rounded-lg transition-colors font-black text-xl"
                                                 >
                                                     +
                                                 </button>
@@ -781,21 +783,21 @@ const ProductList = () => {
                         </div>
 
                         {/* Total Sum Footer */}
-                        <div className="px-6 py-6 bg-slate-800/50 border-t border-white/5 flex justify-between items-end">
+                        <div className="px-6 py-6 bg-slate-50 border-t border-slate-200 flex justify-between items-end">
                             <div>
-                                <span className="text-slate-500 font-bold uppercase tracking-[0.2em] text-[10px] block mb-1">Estimation Total</span>
-                                <span className="text-3xl font-black text-white drop-shadow-[0_0_15px_rgba(255,255,255,0.2)]">
+                                <span className="text-slate-400 font-bold uppercase tracking-[0.2em] text-[10px] block mb-1">Estimation Total</span>
+                                <span className="text-3xl font-black text-slate-900">
                                     {cartItems.reduce((acc, item) => {
                                         const p = item.product;
                                         const price = Math.floor((p.factoryPrice || 0) * (1 - (p.discountRate || 0) / 100));
                                         return acc + (price * item.qty);
-                                    }, 0).toLocaleString()}<span className="text-sm ml-1 opacity-50 font-medium italic uppercase">KRW</span>
+                                    }, 0).toLocaleString()}<span className="text-sm ml-1 text-slate-400 font-medium italic uppercase">KRW</span>
                                 </span>
                             </div>
                         </div>
 
                         {/* Action Bar */}
-                        <div className="p-6 bg-slate-900 space-y-4 pb-10 sm:pb-6">
+                        <div className="p-6 bg-white space-y-4 pb-10 sm:pb-6">
                             <button
                                 onClick={copyToClipboard}
                                 className="w-full py-5 bg-gradient-to-br from-blue-600 via-blue-500 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-black text-lg rounded-2xl flex items-center justify-center gap-3 shadow-xl shadow-blue-900/40 active:scale-[0.98] transition-all group overflow-hidden relative"
@@ -808,7 +810,7 @@ const ProductList = () => {
                             <div className="grid grid-cols-2 gap-3">
                                 <button
                                     onClick={copyAccount}
-                                    className="py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-bold text-xs rounded-xl transition-all border border-white/5"
+                                    className="py-3 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold text-xs rounded-xl transition-all border border-slate-200"
                                 >
                                     계좌번호 복사
                                 </button>
