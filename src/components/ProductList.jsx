@@ -520,7 +520,7 @@ const ProductList = () => {
                                             <td className="px-5 py-4 font-black text-slate-700">{getBrandDisplayName(p.brand)}</td>
                                             <td className="px-5 py-4 font-bold text-slate-500">{p.model}</td>
                                             <td className="px-5 py-4">
-                                                <span className="bg-slate-100 px-2 py-1 rounded font-mono text-[11px] border border-slate-200 text-slate-600">{p.size}</span>
+                                                <span className="bg-slate-100 px-2 py-1 rounded font-mono text-[13px] border border-slate-200 text-slate-600 font-bold">{p.size}</span>
                                             </td>
                                             <td className="px-5 py-4 text-right">
                                                 <input
@@ -586,17 +586,17 @@ const ProductList = () => {
                                     <div className="flex justify-between items-start mb-4 relative z-10">
                                         <div onClick={() => toggleSelectItem(p)} className="cursor-pointer">
                                             <div className="flex items-center gap-3 mb-1">
-                                                <span className="px-2 py-0.5 bg-blue-600 text-[10px] font-black text-white rounded uppercase tracking-tighter shadow-sm">{getBrandDisplayName(p.brand)}</span>
+                                                <span className="px-2.5 py-1 bg-blue-600 text-[12px] font-black text-white rounded uppercase tracking-tighter shadow-sm">{getBrandDisplayName(p.brand)}</span>
                                                 <span className={`transition-colors ${selected ? 'text-blue-500' : 'text-slate-300'}`}>
-                                                    {selected ? <CheckSquare size={22} /> : <Square size={22} />}
+                                                    {selected ? <CheckSquare size={26} /> : <Square size={26} />}
                                                 </span>
                                             </div>
-                                            <h3 className="text-lg font-black text-slate-900 leading-tight">{p.model}</h3>
-                                            <p className="text-xs font-mono text-slate-500 mt-1">{p.size}</p>
+                                            <h3 className="text-xl font-black text-slate-900 leading-tight">{p.model}</h3>
+                                            <p className="text-sm font-mono text-slate-500 mt-1">{p.size}</p>
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">재고</div>
-                                            <div className={`text-xl font-black italic ${p.totalStock > 0 ? 'text-slate-800' : 'text-red-500/70'}`}>
+                                            <div className="text-[11px] text-slate-400 font-bold uppercase tracking-widest mb-1">재고</div>
+                                            <div className={`text-2xl font-black italic ${p.totalStock > 0 ? 'text-slate-800' : 'text-red-500/70'}`}>
                                                 {p.totalStock > 0 ? p.totalStock.toLocaleString() : '품절'}
                                             </div>
                                         </div>
@@ -604,19 +604,19 @@ const ProductList = () => {
 
                                     <div className="grid grid-cols-2 gap-4 pt-4 border-t border-slate-100 relative z-10">
                                         <div>
-                                            <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block">공장도</label>
+                                            <label className="text-[11px] text-slate-500 font-black uppercase mb-1 block">공장도</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-transparent border-none px-0 py-2 text-sm font-bold text-slate-700 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                className="w-full bg-transparent border-none px-0 py-2 text-base font-bold text-slate-700 focus:ring-1 focus:ring-blue-500/20 outline-none"
                                                 value={factoryPrice ? factoryPrice.toLocaleString() : ''}
                                                 onChange={(e) => handlePriceUpdate(p, 'factoryPrice', e.target.value)}
                                             />
                                         </div>
                                         <div>
-                                            <label className="text-[10px] text-slate-500 font-black uppercase mb-1 block">할인율 %</label>
+                                            <label className="text-[11px] text-slate-500 font-black uppercase mb-1 block">할인율 %</label>
                                             <input
                                                 type="text"
-                                                className="w-full bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-sm font-black text-blue-600 focus:ring-1 focus:ring-blue-500/20 outline-none"
+                                                className="w-full bg-blue-50 border border-blue-100 rounded-lg px-3 py-2 text-base font-black text-blue-600 focus:ring-1 focus:ring-blue-500/20 outline-none"
                                                 value={discountRate}
                                                 onChange={(e) => handlePriceUpdate(p, 'discountRate', e.target.value.replace(/[^0-9]/g, ''))}
                                             />
@@ -659,9 +659,9 @@ const ProductList = () => {
                                             })()}
                                         </div>
                                         <div className="text-right">
-                                            <div className="text-[10px] text-blue-600 font-black uppercase tracking-widest leading-none mb-1">판매가</div>
-                                            <div className="text-2xl font-black text-blue-600">
-                                                {discountedPrice.toLocaleString()}<span className="text-sm ml-0.5 font-medium">₩</span>
+                                            <div className="text-[11px] text-blue-600 font-black uppercase tracking-widest leading-none mb-1">판매가</div>
+                                            <div className="text-3xl font-black text-blue-600">
+                                                {discountedPrice.toLocaleString()}<span className="text-base ml-0.5 font-medium">원</span>
                                             </div>
                                         </div>
                                     </div>
